@@ -1,0 +1,147 @@
+default:
+  base_os:
+    ip_forward: false
+    volume_groups: {}
+  base_users:
+    add:
+      - vagrant
+    spec:
+      joeblow:
+        uid: 2002
+        email: devnull@v4.radia.run
+      marysmith:
+        uid: 2003
+        email: blackhole@v4.radia.run
+        procmail_want_include: true
+      vagrant:
+        uid: 1000
+        email: vagrant@v4.radia.run
+        want_shell: true
+  component:
+    tls_crt_create: true
+    tls_crt:
+       misc_hosts:
+         - alpha2.sirepo.com
+         - bivio.biz.v5.radia.run
+  db_bkp:
+    max_copies: 2
+    on_calendar: "6:30"
+  docker:
+    iptables: false
+  docker_cache:
+    host: ''
+  docker_registry:
+    host: v3.radia.run
+  logrotate:
+    verbose: true
+    # sometime before bkp.on_calendar
+    on_calendar: "7:30"
+  network:
+    devices: {}
+    trusted: {}
+  nginx:
+    worker_processes: 1
+  rsconf: {}
+  rsconf_db:
+    #TODO(robnagler) POSIT dev/nginx/nginx.conf.jinja
+    # defunct elvin_server https://en.wikipedia.org/wiki/Elvin
+    http_host: http://v3.radia.run:2916
+    host_run_d: /srv
+    root_u: root
+    run_u: vagrant
+    run_uid: 1000
+    local_files:
+      "/etc/base.rsconf":
+        mode: 0o700
+        owner: nobody
+        group: vagrant
+  sirepo:
+    smtp:
+      from_email: 'vagrant+support@localhost.localdomain'
+      from_name: 'RadiaSoft Support'
+      password: password
+      server: mta.bivio.biz
+      user: this-is-ignored
+    docker_image: radiasoft/sirepo
+    auth:
+      role_moderation_moderator_email: vagrant@localhost.localdomain
+      methods:
+        - guest
+      guest:
+        expiry_days: 1
+    feature_config:
+      moderated_sim_types:
+        - jupyterhublogin
+    sim_api:
+      jupyterhublogin:
+        # POSIT: Jupyterhub user_d
+        user_db_root_d: /srv/jupyterhub/user
+    job:
+      max_message_bytes: 333m
+    pkcli:
+      service_processes: 1
+      service_threads: 20
+      service_port: 7000
+      job_supervisor:
+        port: 7004
+  sirepo_jupyterhub:
+    admin_users: [ 'vagrant' ]
+    docker_image: radiasoft/jupyterhub
+    jupyter_docker_image: radiasoft/beamsim-jupyter
+    api_port: 7914
+    configurable_http_proxy_api_port: 8112
+    configurable_http_proxy_port: 8111
+    uri_root: 'jupyter'
+    pools: {}
+
+channel:
+  dev:
+    network:
+      trusted:
+        # v*.radia.run private network
+        10.10.10.0/24:
+          gateway: 10.10.10.2
+        # random network to test
+        216.17.132.32/27:
+          gateway: 216.17.132.62
+          search: radia.run
+          nameservers: [ 162.159.27.72, 162.159.24.39 ]
+      untrusted: {}
+
+host:
+  dev:
+    v3.radia.run:
+      base_os:
+        volume_groups:
+          docker:
+            logical_volumes:
+              docker:
+                #POSIT: download/installers/vagrant-dev:config.persistent_storage.size=102400
+                gigabytes: 99
+                mount_d: /srv/docker
+      docker:
+        tls_host: v3.radia.run
+      rsconf_db:
+        components:
+          - docker
+          - rsconf
+          - docker_registry
+    v4.radia.run:
+      base_users:
+        add:
+          - joeblow
+          - marysmith
+        spec:
+          joeblow:
+            want_shell: true
+      docker:
+        tls_host: v4.radia.run
+      rsconf_db:
+        components: [ sirepo, sirepo_job_supervisor, ]
+      sirepo:
+        job_driver:
+          docker:
+            dev_volumes: false
+            hosts: [ v4.radia.run ]
+        num_api_servers: 3
+        vhost: sirepo.v4.radia.run
