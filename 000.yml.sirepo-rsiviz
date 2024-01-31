@@ -71,15 +71,6 @@ default:
       service_port: 7000
       job_supervisor:
         port: 7004
-  sirepo_jupyterhub:
-    admin_users: [ 'vagrant' ]
-    docker_image: radiasoft/jupyterhub
-    jupyter_docker_image: radiasoft/beamsim-jupyter
-    api_port: 7914
-    configurable_http_proxy_api_port: 8112
-    configurable_http_proxy_port: 8111
-    uri_root: 'jupyter'
-
 channel:
   dev:
     network:
@@ -123,42 +114,22 @@ host:
       docker:
         tls_host: v4.radia.run
       rsconf_db:
-        components: [ rsiviz, devbox ]
+        components: [ sirepo, sirepo_job_supervisor, rsiviz ]
       sirepo:
+        feature_config:
+          enable_global_resources: true
+          proprietary_sim_types: [ viz3d ]
+          moderated_sim_types: ['']
+        global_resources:
+          public_ports_min: 12000
+          public_ports_max: 12050
+          ports_min: 12050
+          ports_max: 12100
+          ips: 127.3.0.0/16
         job_driver:
           docker:
+            image: radiasoft/rsiviz:alpha
             dev_volumes: false
             hosts: [ v4.radia.run ]
         num_api_servers: 3
         vhost: sirepo.v4.radia.run
-      rsiviz:
-        docker_image: radiasoft/rsiviz:latest
-        docker_image_is_local: true
-        server_port: 8002
-        index_iframe_port: 8000
-        util:
-          analysis_d: /srv/rsiviz/live-data
-          det_cal_f: /srv/rsiviz/TOPAZ_2018C.DetCal
-          event_d: /srv/rsiviz/live-data
-      devbox:
-        docker_image: radiasoft/rsiviz:latest
-        docker_image_is_local: true
-        guest_d: /home/vagrant/
-        ssh_service_port_delta: 100
-        users:
-          devtech3:
-            rsiviz:
-              ip_base: 127.1.0.0
-              port_base: 20000
-            ssh_port: 3002
-          fullstackdude:
-            rsiviz:
-              ip_base: 127.2.0.0
-              port_base: 30000
-            ssh_port: 3102
-      systemd:
-        extra_run_flags:
-            rsiviz:
-                gpus: "all"
-            devbox:
-                gpus: "all"

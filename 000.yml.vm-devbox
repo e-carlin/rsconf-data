@@ -10,10 +10,12 @@ default:
       joeblow:
         uid: 2002
         email: devnull@v4.radia.run
+        vm_devbox_ssh_port: 11110
       marysmith:
         uid: 2003
         email: blackhole@v4.radia.run
         procmail_want_include: true
+        vm_devbox_ssh_port: 11111
       vagrant:
         uid: 1000
         email: vagrant@v4.radia.run
@@ -56,30 +58,6 @@ default:
         mode: 0o700
         owner: nobody
         group: vagrant
-  sirepo:
-    docker_image: radiasoft/sirepo
-    auth:
-      methods:
-        - guest
-      guest:
-        expiry_days: 1
-    job:
-      max_message_bytes: 333m
-    pkcli:
-      service_processes: 1
-      service_threads: 20
-      service_port: 7000
-      job_supervisor:
-        port: 7004
-  sirepo_jupyterhub:
-    admin_users: [ 'vagrant' ]
-    docker_image: radiasoft/jupyterhub
-    jupyter_docker_image: radiasoft/beamsim-jupyter
-    api_port: 7914
-    configurable_http_proxy_api_port: 8112
-    configurable_http_proxy_port: 8111
-    uri_root: 'jupyter'
-
 channel:
   dev:
     network:
@@ -123,42 +101,15 @@ host:
       docker:
         tls_host: v4.radia.run
       rsconf_db:
-        components: [ rsiviz, devbox ]
-      sirepo:
-        job_driver:
-          docker:
-            dev_volumes: false
-            hosts: [ v4.radia.run ]
-        num_api_servers: 3
-        vhost: sirepo.v4.radia.run
-      rsiviz:
-        docker_image: radiasoft/rsiviz:latest
-        docker_image_is_local: true
-        server_port: 8002
-        index_iframe_port: 8000
-        util:
-          analysis_d: /srv/rsiviz/live-data
-          det_cal_f: /srv/rsiviz/TOPAZ_2018C.DetCal
-          event_d: /srv/rsiviz/live-data
-      devbox:
-        docker_image: radiasoft/rsiviz:latest
-        docker_image_is_local: true
-        guest_d: /home/vagrant/
-        ssh_service_port_delta: 100
+        components: [ vm_devbox ]
+      vm_devbox:
+        vm_parent_domain: radia.run
         users:
-          devtech3:
-            rsiviz:
-              ip_base: 127.1.0.0
-              port_base: 20000
-            ssh_port: 3002
-          fullstackdude:
-            rsiviz:
-              ip_base: 127.2.0.0
-              port_base: 30000
-            ssh_port: 3102
-      systemd:
-        extra_run_flags:
-            rsiviz:
-                gpus: "all"
-            devbox:
-                gpus: "all"
+          - joeblow
+      # sirepo:
+      #   job_driver:
+      #     docker:
+      #       dev_volumes: false
+      #       hosts: [ v4.radia.run ]
+      #   num_api_servers: 3
+      #   vhost: sirepo.v4.radia.run
