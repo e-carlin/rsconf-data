@@ -10,12 +10,10 @@ default:
       joeblow:
         uid: 2002
         email: devnull@v4.radia.run
-        vm_devbox_ssh_port: 11110
       marysmith:
         uid: 2003
         email: blackhole@v4.radia.run
         procmail_want_include: true
-        vm_devbox_ssh_port: 11111
       vagrant:
         uid: 1000
         email: vagrant@v4.radia.run
@@ -58,6 +56,12 @@ default:
         mode: 0o700
         owner: nobody
         group: vagrant
+  vm_devbox_users:
+    spec:
+      vm-devbox-user-1:
+        ssh_port: 11110
+      vm-devbox-user-2:
+        ssh_port: 11111
 channel:
   dev:
     network:
@@ -105,11 +109,5 @@ host:
       vm_devbox:
         vm_parent_domain: radia.run
         users:
-          - joeblow
-      # sirepo:
-      #   job_driver:
-      #     docker:
-      #       dev_volumes: false
-      #       hosts: [ v4.radia.run ]
-      #   num_api_servers: 3
-      #   vhost: sirepo.v4.radia.run
+          - vm-devbox-user-1
+          - vm-devbox-user-2
