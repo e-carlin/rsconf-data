@@ -1,0 +1,112 @@
+# remove v9.radia.run block from db/secret/000.yml
+default:
+  base_os:
+    ip_forward: false
+    volume_groups: {}
+  base_users:
+    add:
+      - vagrant
+    spec:
+      joeblow:
+        uid: 2002
+        email: devnull@v4.radia.run
+      marysmith:
+        uid: 2003
+        email: blackhole@v4.radia.run
+        procmail_want_include: true
+      vagrant:
+        uid: 1000
+        email: vagrant@v4.radia.run
+        want_shell: true
+  component:
+    tls_crt_create: true
+    tls_crt:
+       misc_hosts:
+         - alpha2.sirepo.com
+         - bivio.biz.v5.radia.run
+  db_bkp:
+    max_copies: 2
+    on_calendar: "6:30"
+  docker:
+    iptables: false
+  docker_cache:
+    host: ''
+  docker_registry:
+    host: v3.radia.run
+  logrotate:
+    verbose: true
+    # sometime before bkp.on_calendar
+    on_calendar: "7:30"
+  network:
+    devices: {}
+    trusted: {}
+  nginx:
+    worker_processes: 1
+  rsconf: {}
+  rsconf_db:
+    #TODO(robnagler) POSIT dev/nginx/nginx.conf.jinja
+    # defunct elvin_server https://en.wikipedia.org/wiki/Elvin
+    http_host: http://v3.radia.run:2916
+    host_run_d: /srv
+    root_u: root
+    run_u: vagrant
+    run_uid: 1000
+    local_files:
+      "/etc/base.rsconf":
+        mode: 0o700
+        owner: nobody
+        group: vagrant
+  vm_devbox_users:
+    spec:
+      vm-devbox-user-1:
+        ssh_port: 11110
+      vm-devbox-user-2:
+        ssh_port: 11111
+channel:
+  dev:
+    network:
+      trusted:
+        # v*.radia.run private network
+        10.10.10.0/24:
+          gateway: 10.10.10.2
+        # random network to test
+        216.17.132.32/27:
+          gateway: 216.17.132.62
+          search: radia.run
+          nameservers: [ 162.159.27.72, 162.159.24.39 ]
+      untrusted: {}
+
+host:
+  dev:
+    v3.radia.run:
+      base_os:
+        volume_groups:
+          docker:
+            logical_volumes:
+              docker:
+                #POSIT: download/installers/vagrant-dev:config.persistent_storage.size=102400
+                gigabytes: 99
+                mount_d: /srv/docker
+      docker:
+        tls_host: v3.radia.run
+      rsconf_db:
+        components:
+          - docker
+          - rsconf
+          - docker_registry
+    v4.radia.run:
+      base_users:
+        add:
+          - joeblow
+          - marysmith
+        spec:
+          joeblow:
+            want_shell: true
+      docker:
+        tls_host: v4.radia.run
+      mlflow:
+        docker_image: radiasoft/mlops
+        service_port: 8999
+        vhost: mlflow.v4.radia.run
+      rsconf_db:
+        components: [ mlflow ]
